@@ -169,6 +169,8 @@ async def on_ready():
     print(f"目前登入身份 --> {bot.user}")
     # 同步 slash commands 到指定伺服器 (立即生效)
     try:
+        # 指令是用 @bot.tree.command 註冊的全域指令，要先複製到伺服器，sync(guild=...) 才會帶上它們
+        bot.tree.copy_global_to(guild=MY_GUILD)
         synced = await bot.tree.sync(guild=MY_GUILD)
         print(f"已同步 {len(synced)} 個 slash commands 到伺服器")
     except Exception as e:
