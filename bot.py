@@ -4,6 +4,7 @@ from discord.ext import commands
 import requests
 import time
 import os
+from urllib.parse import quote
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -43,6 +44,17 @@ name_map = {
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+def get_account_by_riot_id(game_name, tag_line, api_key):
+    # Account-V1 用區域路由 (台服屬於 asia)，PUUID 會依 API key 加密，所以 LoL / TFT 要各查一次
+    url = (
+        "https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/"
+        f"{quote(game_name)}/{quote(tag_line)}?api_key={api_key}"
+    )
+    res = requests.get(url)
+    if res.status_code != 200:
+        return None
+    return res.json()
 
 def get_ranked_embed(puuid, puuid_tft=None, player_name="某人"):
     # 1. 取得基本牌位資訊 (維持原樣，使用 tw2)
@@ -192,6 +204,33 @@ async def rank_command(interaction: discord.Interaction, player: app_commands.Ch
     else:
         await interaction.response.send_message("找不到該玩家的資料", ephemeral=True)
 
+@bot.tree.command(name="search", description="用 Riot ID (名稱#標籤) 查詢任意玩家的牌位")
+@app_commands.describe(riot_id="例如：Hide on bush#KR1")
+async def search_command(interaction: discord.Interaction, riot_id: str):
+    riot_id = riot_id.strip().replace("＃", "#")
+    if "#" not in riot_id:
+        await interaction.response.send_message("格式錯誤，請輸入 `名稱#標籤`，例如 `Hide on bush#KR1`", ephemeral=True)
+        return
+
+    game_name, tag_line = (s.strip() for s in riot_id.rsplit("#", 1))
+    if not game_name or not tag_line:
+        await interaction.response.send_message("格式錯誤，請輸入 `名稱#標籤`，例如 `Hide on bush#KR1`", ephemeral=True)
+        return
+
+    await interaction.response.defer()
+
+    account_lol = get_account_by_riot_id(game_name, tag_line, api_key_lol)
+    if not account_lol:
+        await interaction.followup.send(f"找不到 `{game_name}#{tag_line}` 這個玩家")
+        return
+
+    account_tft = get_account_by_riot_id(game_name, tag_line, api_key_TFT) if api_key_TFT else None
+    p_tft = account_tft["puuid"] if account_tft else None
+    p_name = f"{account_lol['gameName']}#{account_lol['tagLine']}"
+
+    embed = get_ranked_embed(account_lol["puuid"], p_tft, player_name=p_name)
+    await interaction.followup.send(embed=embed)
+
 @bot.tree.command(name="help", description="顯示所有可用指令")
 async def help_command(interaction: discord.Interaction):
     embed = discord.Embed(
@@ -205,6 +244,7 @@ async def help_command(interaction: discord.Interaction):
         name="🔹 Slash Commands (斜線指令)",
         value=(
             "**/rank [玩家]** - 查詢玩家的 LoL 和 TFT 牌位\n"
+            "**/search [名稱#標籤]** - 用 Riot ID 查詢任意玩家的牌位\n"
             "**/help** - 顯示此說明訊息"
         ),
         inline=False
