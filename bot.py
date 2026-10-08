@@ -25,9 +25,14 @@ puuidDict_lol = {
 }
 
 puuidDict_TFT = {
+    "": "vN9r5-fJWuzCHXE-OK2jiT5p_2U1D7FEATM_eZvybEpH5hnPRpTQV_bgBf9m63uM33v3HSMTSQpxPg",#小胖
+    "liu"   : "FT9HpjQWcD1eXSrXI8rVFcWFxP82FIVgU2WBK0r7YKmKy-RJ7gATKXOfseo0-mX2f1IA73AO8KVHAg",
     "su"    : "3LMV8gzK6z5CHSlL4C0dZHxCnybF3WUZehNojvlpQGI-PmwHRshvqlLIBPqqh-x8lws7oQ63QZJu6Q",
-    "yu"    : "Q7nquiLWHfe99O1HddcqSBQR6mjlM99h0xnJf96ia02IEe2PLJhJrmuuqA8Scmz59PINJjv3Esd0aw",
+    "kuo"   : "P4-_iHnZTud68GEpZJLvwiiH7MGItNN8CLVEpt1UT9vr9DVozC1zwh7C2ExgC52WrS_olju9q4V5hQ",
     "char"  : "dVMCq0inlQYVcfg4_jwHi1JftA82SSHjAgY2-6dnb-g-MmpFkdQgHo-vTOAtDO7MA4a0eSz2ItiQgA",
+    "ryu"   : "h0F2CquJl5RMPd2TjACP-tQBQyPGYs5rbMYlWyEV7mSfs6FgxL2Z6um62x5n26F4dMxpARm4zBoPZQ",
+    "yu"    : "Q7nquiLWHfe99O1HddcqSBQR6mjlM99h0xnJf96ia02IEe2PLJhJrmuuqA8Scmz59PINJjv3Esd0aw",
+    "wei"   : "8IwVNRu5L07KihwDKwaeRWOKCxm-D2FnMJ4ZAt-qCI6uPSFt-N7hsszJ-8m020vUk6B9-l9lrbP_tg",
 }
 
 # 名稱對應表 (給 slash command 和 on_message 共用)
