@@ -348,21 +348,25 @@ def claim_gg_milestones(guild_id, user_id, before, after):
                 claimed.append((n, t))
     return claimed
 
-async def record_gg(message, n):
-    # 加 GG 次數；跨過特別數字就講一聲 + 自動貼 /gg 排行
-    guild_id = message.guild.id
+def add_gg_with_milestone(guild_id, user, n):
+    # 加 GG 次數；跨過特別數字就回傳彩蛋那句話，沒有就回傳 None
     before = get_gg_total(guild_id)
-    add_gg(guild_id, message.author.id, n)
+    add_gg(guild_id, user.id, n)
     if n <= 0:
-        return
-    claimed = claim_gg_milestones(guild_id, message.author.id, before, get_gg_total(guild_id))
+        return None
+    claimed = claim_gg_milestones(guild_id, user.id, before, get_gg_total(guild_id))
     if not claimed:
-        return
+        return None
     # 一次跨好幾個只講最後一個
     num, text = claimed[-1]
-    msg = f"第 {num} 次 GG 了" + (f"，{text}" if text else "") + f"（{message.author.display_name} 打的）"
-    ranking = build_gg_ranking_embed(guild_id)
-    await message.channel.send(msg, embed=ranking, allowed_mentions=discord.AllowedMentions.none())
+    return f"第 {num} 次 GG 了" + (f"，{text}" if text else "") + f"（{user.display_name} 打的）"
+
+async def record_gg(message, n):
+    # 觸發彩蛋就講一聲 + 自動貼 /gg 排行
+    msg = add_gg_with_milestone(message.guild.id, message.author, n)
+    if msg:
+        ranking = build_gg_ranking_embed(message.guild.id)
+        await message.channel.send(msg, embed=ranking, allowed_mentions=discord.AllowedMentions.none())
 
 MY_GUILD = discord.Object(id=668344492541083648)
 
@@ -431,16 +435,15 @@ async def search_command(interaction: discord.Interaction, riot_id: str):
     embed = await asyncio.to_thread(get_ranked_embed, account_lol["puuid"], p_tft, p_name)
     await interaction.followup.send(embed=embed)
 
-@bot.tree.command(name="gg", description="查看 server 裡講 GG 的次數排行")
+@bot.tree.command(name="gg", description="GG 一次，順便看 server 裡講 GG 的次數排行")
 async def gg_command(interaction: discord.Interaction):
     if not interaction.guild:
         await interaction.response.send_message("這個指令只能在 server 使用", ephemeral=True)
         return
+    # 下 /gg 本身也算講一次 GG
+    msg = add_gg_with_milestone(interaction.guild.id, interaction.user, 1)
     embed = build_gg_ranking_embed(interaction.guild.id)
-    if not embed:
-        await interaction.response.send_message("還沒有人講過 GG")
-        return
-    await interaction.response.send_message(embed=embed, allowed_mentions=discord.AllowedMentions.none())
+    await interaction.response.send_message(msg, embed=embed, allowed_mentions=discord.AllowedMentions.none())
 
 @bot.tree.command(name="help", description="顯示所有可用指令")
 async def help_command(interaction: discord.Interaction):
@@ -456,7 +459,7 @@ async def help_command(interaction: discord.Interaction):
         value=(
             "**/rank [玩家]** - 查詢玩家的 LoL 和 TFT 牌位\n"
             "**/search [名稱#標籤]** - 用 Riot ID 查詢任意玩家的牌位\n"
-            "**/gg** - 查看講 GG 的次數排行 (全 server 次數到特別數字會觸發彩蛋 🥚)\n"
+            "**/gg** - GG 一次並查看講 GG 的次數排行 (全 server 次數到特別數字會觸發彩蛋 🥚)\n"
             "**/help** - 顯示此說明訊息"
         ),
         inline=False
